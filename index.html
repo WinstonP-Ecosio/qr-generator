@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Generator</title>
+    <!-- We use the incredibly stable qrcode-generator library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        input { padding: 10px; width: 300px; font-size: 16px; margin-bottom: 10px; }
+        
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; margin: 5px; transition: background 0.3s; }
+        button:hover { opacity: 0.9; }
+        
+        /* Button Colors */
+        .btn-generate { background: #007BFF; color: white; }
+        .btn-download-png { background: #28a745; color: white; display: none; }
+        .btn-download-svg { background: #ff9800; color: white; display: none; }
+
+        /* Container for the QR */
+        #qr-container { margin-top: 20px; display: flex; justify-content: center; min-height: 250px; }
+        
+        #download-actions { margin-top: 15px; }
+
+        footer { margin-top: 40px; color: #666; font-size: 14px; }
+        footer a { color: #007BFF; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <h2>QR Code Generator - Simple & Fast</h2>
+
+    <input type="text" id="urlInput" placeholder="Paste the URL here (e.g., https://yoursite.com)">
+    <br>
+    <button class="btn-generate" onclick="generateQR()">Generate QR</button>
+
+    <!-- The QR code will be injected here -->
+    <div id="qr-container"></div>
+
+    <!-- Download buttons -->
+    <div id="download-actions">
+        <button id="btnDownloadPNG" class="btn-download-png" onclick="downloadPNG()">Download PNG</button>
+        <button id="btnDownloadSVG" class="btn-download-svg" onclick="downloadSVG()">Download SVG</button>
+    </div>
+
+    <script>
+        // Variables to store the generated files in memory
+        let pngDataUrl = "";
+        let svgString = "";
+
+        function generateQR() {
+            const url = document.getElementById("urlInput").value;
+            const container = document.getElementById("qr-container");
+            const btnPNG = document.getElementById("btnDownloadPNG");
+            const btnSVG = document.getElementById("btnDownloadSVG");
+            
+            // Clear previous QR and hide buttons
+            container.innerHTML = "";
+            btnPNG.style.display = "none";
+            btnSVG.style.display = "none";
+
+            if (url) {
+                try {
+                    // Type 0 means auto-detect size. 'H' is for High error correction.
+                    const qr = qrcode(0, 'H');
+                    qr.addData(url);
+                    qr.make();
+
+                    // Size configuration (cell size and margin)
+                    const cellSize = 8;
+                    const margin = 2;
+
+                    // 1. Show the QR on screen as an image
+                    container.innerHTML = qr.createImgTag(cellSize, margin);
+
+                    // 2. Save the PNG Data URL for the download button
+                    pngDataUrl = qr.createDataURL(cellSize, margin);
+
+                    // 3. Save the SVG string for the download button
+                    svgString = qr.createSvgTag(cellSize, margin);
+
+                    // Show buttons
+                    btnPNG.style.display = "inline-block";
+                    btnSVG.style.display = "inline-block";
+
+                } catch (error) {
+                    console.error(error);
+                    alert("There was an error generating the QR code. Please try again.");
+                }
+            } else {
+                alert("Please enter a valid URL.");
+            }
+        }
+
+        function downloadPNG() {
+            if (!pngDataUrl) return;
+            
+            // Create a temporary link and trigger the download
+            const link = document.createElement("a");
+            link.href = pngDataUrl;
+            link.download = "qr-code.png";
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadSVG() {
+            if (!svgString) return;
+
+            // Convert the raw SVG string into a downloadable Blob file
+            const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+            const svgUrl = URL.createObjectURL(blob);
+            
+            // Create a temporary link and trigger the download
+            const link = document.createElement("a");
+            link.href = svgUrl;
+            link.download = "qr-code.svg";
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up memory
+            URL.revokeObjectURL(svgUrl);
+        }
+    </script>
+</body>
+<footer>
+    <p>QR Code Generator <a href="https://winstondev.com" target="_blank">winstondev</a></p>
+</footer>
+</html>
